@@ -1,3 +1,13 @@
+grub2 (2.02~beta2-36ubuntu3.3) xenial; urgency=medium
+
+  * debian/patches/ip6_send_router_solicitation_7c4b6b7b.patch: handle long
+    RA intervals by explicitly sending a SOLICIT.
+  * debian/patches/ip6_fix_routing_eb9f401f.patch: fix IPv6 routing; we should
+    be able to talk to things outside of link-local addresses; to do this,
+    allow specifying a gateway and interface. (LP: #1229458)
+
+ -- Mathieu Trudel-Lapierre <cyphermox@ubuntu.com>  Wed, 03 Aug 2016 16:46:41 -0400
+
 grub2 (2.02~beta2-36ubuntu3.2) xenial; urgency=medium
 
   * Add loopback and squash4 modules to the signed EFI images.  LP: #1604499.
