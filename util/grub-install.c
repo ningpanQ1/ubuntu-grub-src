@@ -2013,20 +2013,17 @@ main (int argc, char *argv[])
 	  {
 	    char *shim_signed = NULL;
 	    char *mok_signed = NULL, *mok_file = NULL;
-	    char *fb_signed = NULL, *fb_file = NULL;
 	    char *config_dst;
 	    FILE *config_dst_f;
 
 	    shim_signed = xasprintf ("/usr/lib/shim/shim%s.efi.signed", efi_suffix);
 	    mok_signed = xasprintf ("mm%s.efi.signed", efi_suffix);
 	    mok_file = xasprintf ("mm%s.efi", efi_suffix);
-	    fb_signed = xasprintf ("fb%s.efi.signed", efi_suffix);
-	    fb_file = xasprintf ("fb%s.efi", efi_suffix);
 
 	    if (grub_util_is_regular (shim_signed))
 	      {
 		char *chained_base, *chained_dst;
-		char *mok_src, *mok_dst, *fb_src, *fb_dst;
+		char *mok_src, *mok_dst;
 		if (!removable)
 		  {
 		    free (efi_file);
@@ -2052,15 +2049,6 @@ main (int argc, char *argv[])
 					mok_dst, 0);
 		free (mok_src);
 		free (mok_dst);
-
-		fb_src = grub_util_path_concat (2, "/usr/lib/shim/",
-						    fb_signed);
-		fb_dst = grub_util_path_concat (2, efidir,
-						    fb_file);
-		grub_install_copy_file (fb_src,
-					fb_dst, 0);
-		free (fb_src);
-		free (fb_dst);
 
 	      }
 	    else
