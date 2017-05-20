@@ -696,7 +696,7 @@ case "$1" in
           kubuntu) bootloader_id=ubuntu ;;
         esac
 
-        if dpkg --compare-versions "$2" lt-nl 2.02~beta2-36ubuntu3.10 then
+        if dpkg --compare-versions "$2" lt-nl 2.02~beta2-36ubuntu3.10; then
           if [ -e "/boot/efi/EFI/${bootloader_id}/fbx64.efi" ]; then
             rm -f "/boot/efi/EFI/${bootloader_id}/fbx64.efi";
           fi
