@@ -117,7 +117,7 @@ parse_dhcp_vendor (const char *name, const void *vend, int limit, int *mask)
 	      grub_memcpy (&gw.ipv4, ptr, sizeof (gw.ipv4));
 	      rname = grub_xasprintf ("%s:default", name);
 	      if (rname)
-		grub_net_add_route_gw (rname, target, gw);
+		grub_net_add_route_gw (rname, target, gw, NULL);
 	      grub_free (rname);
 	    }
 	  break;
@@ -201,7 +201,7 @@ grub_net_configure_by_dhcp_ack (const char *name,
       gw.ipv4 = bp->gateway_ip;
       rname = grub_xasprintf ("%s:gw", name);
       if (rname)
-	grub_net_add_route_gw (rname, target, gw);
+	grub_net_add_route_gw (rname, target, gw, inter);
       grub_free (rname);
 
       target.type = GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4;
