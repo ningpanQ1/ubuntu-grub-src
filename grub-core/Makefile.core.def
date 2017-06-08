@@ -180,6 +180,7 @@ kernel = {
   i386_multiboot = kern/i386/pc/acpi.c;
   i386_coreboot = kern/acpi.c;
   i386_multiboot = kern/acpi.c;
+  common = kern/efi/sb.c;
 
   x86 = kern/i386/tsc.c;
   x86 = kern/i386/tsc_pit.c;
@@ -1695,10 +1696,18 @@ module = {
   ia64_efi = loader/ia64/efi/linux.c;
   arm = loader/arm/linux.c;
   arm64 = loader/arm64/linux.c;
+  arm64 = loader/efi/linux.c;
   fdt = lib/fdt.c;
   common = loader/linux.c;
   common = lib/cmdline.c;
   enable = noemu;
+};
+
+module = {
+  name = fdt;
+  arm64 = loader/arm64/fdt.c;
+  common = lib/fdt.c;
+  enable = fdt;
 };
 
 module = {
@@ -1729,15 +1738,19 @@ module = {
 
 module = {
   name = linuxefi;
+  cflags = '-Wno-error=format= -Wno-error=cast-align -Wno-error=int-to-pointer-cast -Wno-error=pointer-to-int-cast -Wno-error=unused-parameter';
   efi = loader/i386/efi/linux.c;
   efi = lib/cmdline.c;
+  efi = loader/efi/linux.c;
   enable = i386_efi;
   enable = x86_64_efi;
 };
 
 module = {
   name = chain;
+  cflags = '-Wno-error=format= -Wno-error=cast-align -Wno-error=int-to-pointer-cast -Wno-error=pointer-to-int-cast -Wno-error=unused-parameter';
   efi = loader/efi/chainloader.c;
+  efi = loader/efi/linux.c;
   i386_pc = loader/i386/pc/chainloader.c;
   i386_coreboot = loader/i386/coreboot/chainloader.c;
   i386_coreboot = lib/LzmaDec.c;

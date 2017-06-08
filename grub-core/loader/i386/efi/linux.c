@@ -27,6 +27,7 @@
 #include <grub/i18n.h>
 #include <grub/lib/cmdline.h>
 #include <grub/efi/efi.h>
+#include <grub/efi/linux.h>
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
@@ -41,64 +42,18 @@ static char *linux_cmdline;
 
 #define BYTES_TO_PAGES(bytes)   (((bytes) + 0xfff) >> 12)
 
-#define SHIM_LOCK_GUID \
-  { 0x605dab50, 0xe046, 0x4300, {0xab, 0xb6, 0x3d, 0xd8, 0x10, 0xdd, 0x8b, 0x23} }
-
-struct grub_efi_shim_lock
-{
-  grub_efi_status_t (*verify) (void *buffer, grub_uint32_t size);
-};
-typedef struct grub_efi_shim_lock grub_efi_shim_lock_t;
-
-static grub_efi_boolean_t
-grub_linuxefi_secure_validate (void *data, grub_uint32_t size)
-{
-  grub_efi_guid_t guid = SHIM_LOCK_GUID;
-  grub_efi_shim_lock_t *shim_lock;
-  grub_efi_status_t status;
-
-  grub_dprintf ("linuxefi", "Locating shim protocol\n");
-  shim_lock = grub_efi_locate_protocol(&guid, NULL);
-
-  if (!shim_lock)
-    {
-      grub_dprintf ("linuxefi", "shim not available\n");
-      return 0;
-    }
-
-  grub_dprintf ("linuxefi", "Asking shim to verify kernel signature\n");
-  status = shim_lock->verify(data, size);
-  if (status == GRUB_EFI_SUCCESS)
-    {
-      grub_dprintf ("linuxefi", "Kernel signature verification passed\n");
-      return 1;
-    }
-
-  grub_dprintf ("linuxefi", "Kernel signature verification failed (0x%lx)\n",
-		(unsigned long) status);
-  return 0;
-}
-
-typedef void(*handover_func)(void *, grub_efi_system_table_t *, struct linux_kernel_params *);
-
 static grub_err_t
 grub_linuxefi_boot (void)
 {
-  handover_func hf;
   int offset = 0;
 
 #ifdef __x86_64__
   offset = 512;
 #endif
-
-  hf = (handover_func)((char *)kernel_mem + handover_offset + offset);
-
   asm volatile ("cli");
 
-  hf (grub_efi_image_handle, grub_efi_system_table, params);
-
-  /* Not reached */
-  return GRUB_ERR_NONE;
+  return grub_efi_linux_boot ((char *)kernel_mem, handover_offset + offset,
+			      params);
 }
 
 static grub_err_t
@@ -202,7 +157,8 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
   grub_file_t file = 0;
   struct linux_kernel_header lh;
   grub_ssize_t len, start, filelen;
-  void *kernel;
+  void *kernel = NULL;
+  int rc;
 
   grub_dl_ref (my_mod);
 
@@ -228,20 +184,17 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   if (grub_file_read (file, kernel, filelen) != filelen)
     {
-      grub_error (GRUB_ERR_FILE_READ_ERROR, N_("Can't read kernel %s"), argv[0]);
+      grub_error (GRUB_ERR_FILE_READ_ERROR, N_("Can't read kernel %s"),
+		  argv[0]);
       goto fail;
     }
 
-  if (! grub_linuxefi_secure_validate (kernel, filelen))
+  rc = grub_linuxefi_secure_validate (kernel, filelen);
+  if (rc < 0)
     {
       grub_error (GRUB_ERR_ACCESS_DENIED, N_("%s has invalid signature"), argv[0]);
-      grub_free (kernel);
       goto fail;
     }
-
-  grub_file_seek (file, 0);
-
-  grub_free(kernel);
 
   params = grub_efi_allocate_pages_max (0x3fffffff, BYTES_TO_PAGES(16384));
 
@@ -253,15 +206,9 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   grub_dprintf ("linuxefi", "params = %lx\n", (unsigned long) params);
 
-  memset (params, 0, 16384);
+  grub_memset (params, 0, 16384);
 
-  if (grub_file_read (file, &lh, sizeof (lh)) != sizeof (lh))
-    {
-      if (!grub_errno)
-	grub_error (GRUB_ERR_BAD_OS, N_("premature end of file %s"),
-		    argv[0]);
-      goto fail;
-    }
+  grub_memcpy (&lh, kernel, sizeof (lh));
 
   if (lh.boot_flag != grub_cpu_to_le16 (0xaa55))
     {
@@ -324,29 +271,12 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
       goto fail;
     }
 
-  grub_dprintf ("linuxefi", "kernel_mem = %lx\n", (unsigned long) kernel_mem);
+  grub_memcpy (kernel_mem, (char *)kernel + start, len);
+  grub_loader_set (grub_linuxefi_boot, grub_linuxefi_unload, 0);
+  loaded=1;
 
-  if (grub_file_seek (file, start) == (grub_off_t) -1)
-    {
-      grub_error (GRUB_ERR_BAD_OS, N_("premature end of file %s"),
-		  argv[0]);
-      goto fail;
-    }
-
-  if (grub_file_read (file, kernel_mem, len) != len && !grub_errno)
-    {
-      grub_error (GRUB_ERR_BAD_OS, N_("premature end of file %s"),
-		  argv[0]);
-    }
-
-  if (grub_errno == GRUB_ERR_NONE)
-    {
-      grub_loader_set (grub_linuxefi_boot, grub_linuxefi_unload, 0);
-      loaded = 1;
-      lh.code32_start = (grub_uint32_t)(grub_addr_t) kernel_mem;
-    }
-
-  memcpy(params, &lh, 2 * 512);
+  lh.code32_start = (grub_uint32_t)(grub_uint64_t) kernel_mem;
+  grub_memcpy (params, &lh, 2 * 512);
 
   params->type_of_loader = 0x21;
 
@@ -354,6 +284,9 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   if (file)
     grub_file_close (file);
+
+  if (kernel)
+    grub_free (kernel);
 
   if (grub_errno != GRUB_ERR_NONE)
     {
