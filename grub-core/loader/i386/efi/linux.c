@@ -19,6 +19,7 @@
 #include <grub/loader.h>
 #include <grub/file.h>
 #include <grub/err.h>
+#include <grub/misc.h>
 #include <grub/types.h>
 #include <grub/mm.h>
 #include <grub/cpu/linux.h>
@@ -114,6 +115,8 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
       goto fail;
     }
 
+  grub_dprintf ("linuxefi", "initrd_mem = %lx\n", (unsigned long) initrd_mem);
+
   params->ramdisk_size = size;
   params->ramdisk_image = (grub_uint32_t)(grub_addr_t) initrd_mem;
 
@@ -201,6 +204,8 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
       goto fail;
     }
 
+  grub_dprintf ("linuxefi", "params = %lx\n", (unsigned long) params);
+
   grub_memset (params, 0, 16384);
 
   grub_memcpy (&lh, kernel, sizeof (lh));
@@ -237,6 +242,9 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
       grub_error (GRUB_ERR_OUT_OF_MEMORY, N_("can't allocate cmdline"));
       goto fail;
     }
+
+  grub_dprintf ("linuxefi", "linux_cmdline = %lx\n",
+		(unsigned long) linux_cmdline);
 
   grub_memcpy (linux_cmdline, LINUX_IMAGE, sizeof (LINUX_IMAGE));
   grub_create_loader_cmdline (argc, argv,
