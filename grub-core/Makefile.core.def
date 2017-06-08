@@ -1715,6 +1715,7 @@ module = {
 
 module = {
   name = linuxefi;
+  cflags = '-Wno-error=format= -Wno-error=cast-align -Wno-error=int-to-pointer-cast -Wno-error=pointer-to-int-cast -Wno-error=unused-parameter';
   efi = loader/i386/efi/linux.c;
   efi = lib/cmdline.c;
   efi = loader/efi/linux.c;
@@ -1724,7 +1725,9 @@ module = {
 
 module = {
   name = chain;
+  cflags = '-Wno-error=format= -Wno-error=cast-align -Wno-error=int-to-pointer-cast -Wno-error=pointer-to-int-cast -Wno-error=unused-parameter';
   efi = loader/efi/chainloader.c;
+  efi = loader/efi/linux.c;
   i386_pc = loader/i386/pc/chainloader.c;
   i386_coreboot = loader/i386/coreboot/chainloader.c;
   i386_coreboot = lib/LzmaDec.c;
