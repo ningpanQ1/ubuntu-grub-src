@@ -1,3 +1,9 @@
+grub2 (2.02~beta2-36ubuntu3.12-advlinux) xenial; urgency=medium
+
+  * Add uefi variable RecoveryButton support
+
+ -- ning pan <ning.pan@advantech.com.cn>  Tue, 21 May 2024 12:59:17 -0700
+
 grub2 (2.02~beta2-36ubuntu3.12) xenial; urgency=medium
 
   * debian/patches: Rework linuxefi/SecureBoot support and sync with upstream
