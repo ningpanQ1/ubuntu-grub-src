@@ -1505,7 +1505,6 @@ module = {
 module = {
   name = hello;
   common = hello/hello.c;
-  enable = efi;
 };
 
 module = {
@@ -1818,7 +1817,6 @@ module = {
   extra_dist = script/yylex.l;
   extra_dist = script/parser.y;
 
-  enable = efi;
   cflags = '$(CFLAGS_POSIX) -Wno-redundant-decls';
   cppflags = '$(CPPFLAGS_POSIX)';
 };

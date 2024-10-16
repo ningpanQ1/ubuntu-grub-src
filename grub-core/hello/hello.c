@@ -25,8 +25,11 @@
 #include <grub/dl.h>
 #include <grub/extcmd.h>
 #include <grub/i18n.h>
+
+#ifdef GRUB_MACHINE_EFI
 #include <grub/efi/api.h>
 #include <grub/efi/efi.h>
+#endif
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
@@ -37,6 +40,7 @@ grub_cmd_hello (grub_extcmd_context_t ctxt __attribute__ ((unused)),
 {
   grub_printf ("%s\n", _("Hello World"));
 
+#ifdef GRUB_MACHINE_EFI
   grub_efi_uint16_t *os_boot_current = NULL;
   grub_size_t oi_size = 0;
   grub_efi_guid_t global = GRUB_EFI_GLOBAL_VARIABLE_GUID;
@@ -63,6 +67,7 @@ grub_cmd_hello (grub_extcmd_context_t ctxt __attribute__ ((unused)),
   {
        grub_printf(_("efi_variable RecoveryButton data is 0x%02x,datasize is 0x1\n"), *os_recovery);
   }
+#endif
 
   return 0;
 }

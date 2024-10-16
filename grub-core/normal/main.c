@@ -32,8 +32,11 @@
 #include <grub/i18n.h>
 #include <grub/charset.h>
 #include <grub/script_sh.h>
+
+#ifdef GRUB_MACHINE_EFI
 #include <grub/efi/api.h>
 #include <grub/efi/efi.h>
+#endif
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
@@ -281,6 +284,7 @@ grub_normal_execute (const char *config, int nested, int batch)
 	{
 
 	  grub_boot_time ("Entering menu");
+#ifdef GRUB_MACHINE_EFI
 	  /*add start by ning.pan*/
 	  grub_efi_uint8_t *os_recovery = NULL; //grub_efi_uint8_t
 	  grub_size_t oi_size = 0;
@@ -292,6 +296,7 @@ grub_normal_execute (const char *config, int nested, int batch)
 			grub_env_set("default","1");
 	  }
 	  /*add end by ning.pan*/
+#endif
 
 	  grub_show_menu (menu, nested, 0);
 	  if (nested)
